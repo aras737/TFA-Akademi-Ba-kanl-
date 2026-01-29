@@ -14,13 +14,12 @@ const commands = [
 ].map(command => command.toJSON());
 
 client.once("ready", async () => {
-  console.log(`🚀 ${client.user.tag} başarıyla giriş yaptı!`);
+  console.log(`🚀 ${client.user.tag} aktif!`);
   const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
   try {
     await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log("✅ Komutlar global olarak yüklendi.");
   } catch (error) {
-    console.error("Yükleme hatası:", error);
+    console.error(error);
   }
 });
 
@@ -28,13 +27,9 @@ client.once("ready", async () => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  // Hata almamak için botu 'düşünüyor' moduna alıyoruz
-  // 'ephemeral: true' yaparak mesajın sadece atan kişiye görünmesini ve isminin gizli kalmasını sağlıyoruz
-  await interaction.deferReply({ ephemeral: true }).catch(() => null);
+  const logoURL = "https://i.ibb.co/v6mXmP0/akademi-logo.png";
 
-  const logoURL = "https://i.ibb.co/v6mXmP0/akademi-logo.png"; // Attığın logoyu buraya ekledim
-
-  // --- EĞİTİM KİTAPÇIĞI KOMUTU ---
+  // --- EĞİTİM KİTAPÇIĞI ---
   if (interaction.commandName === "egitim-kitapcigi") {
     const embed = new EmbedBuilder()
       .setColor("#2b2d31")
@@ -46,16 +41,18 @@ client.on("interactionCreate", async (interaction) => {
         `**[OR-2] EĞİTİM KİTAPÇIĞI**\nhttps://docs.google.com/document/d/1MS-c8spE22DvTHccV2hsWoF99u_pPwsnogHO-IDUDvY/edit?usp=sharing\n\n` +
         `**[OR-3 / OR-9] EĞİTİM KİTAPÇIĞI**\nhttps://docs.google.com/document/d/1ygwULEGoXN4xIioj9PAgK3K89ZSM7-Gkg73V7qfPsso/edit?usp=sharing`
       )
-      .setFooter({ text: "Akademi işi, Gönül İşi!", iconURL: logoURL })
-      .setTimestamp();
+      .setFooter({ text: "Akademi işi, Gönül İşi!", iconURL: logoURL });
 
-    return interaction.editReply({ embeds: [embed] });
+    // Önce kanala normal mesaj olarak gönderiyoruz (Böylece kimin attığı görünmez)
+    await interaction.channel.send({ embeds: [embed] });
+    // Sonra etkileşimi sessizce bitiriyoruz (Hata vermemesi için gerekli)
+    return interaction.reply({ content: "Gönderildi.", ephemeral: true }).then(() => interaction.deleteReply());
   }
 
-  // --- MADALYA SİSTEMİ KOMUTU ---
+  // --- MADALYA SİSTEMİ ---
   if (interaction.commandName === "madalya-sistemi") {
     const embed = new EmbedBuilder()
-      .setColor("#3a01ff") // Görseldeki morumsu/mavi şerit rengi
+      .setColor("#3a01ff")
       .setAuthor({ name: "Akademi Başkanlığı", iconURL: logoURL })
       .setTitle("MADALYA SİSTEMİ")
       .setDescription(
@@ -81,7 +78,8 @@ client.on("interactionCreate", async (interaction) => {
       )
       .setFooter({ text: "Akademi işi, Gönül İşi!", iconURL: logoURL });
 
-    return interaction.editReply({ embeds: [embed] });
+    await interaction.channel.send({ embeds: [embed] });
+    return interaction.reply({ content: "Gönderildi.", ephemeral: true }).then(() => interaction.deleteReply());
   }
 });
 
